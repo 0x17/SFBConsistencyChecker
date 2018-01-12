@@ -4,8 +4,8 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         if(args.length == 0) {
-            System.out.println("Usage:\nConflicts for subproject TP X: java -jar SFBConsistencyChecker.jar X");
-            System.out.println("Conflict statistics: java-jar SFBConsistencyChecker.jar stats");
+            System.out.println("USAGE\nConflicts for subproject TP X: java -jar SFBConsistencyChecker.jar X");
+            System.out.println("Conflict statistics: java -jar SFBConsistencyChecker.jar stats");
             return;
         }
 
