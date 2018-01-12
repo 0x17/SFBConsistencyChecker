@@ -29,6 +29,7 @@ public class ConsistencyChecker {
         try(BufferedWriter writer = Files.newBufferedWriter(Paths.get(fn))) {
             writer.write(out.toString());
         }
+        System.out.println("Conflicts with the following other subprojects: " + out.getOthers());
         System.out.println(out.stats());
         System.out.println("Wrote conflicts into " + fn);
     }

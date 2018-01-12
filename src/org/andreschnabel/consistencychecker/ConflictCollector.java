@@ -41,6 +41,10 @@ public class ConflictCollector {
         return statCounts().values().stream().mapToInt(Integer::intValue).sum();
     }
 
+    public List<String> getOthers() {
+        return others;
+    }
+
     enum ConflictType {
         COUNT_MISMATCH,
         TEXT_MISMATCH,
@@ -50,14 +54,23 @@ public class ConflictCollector {
 
     private Map<ConflictType, List<String>> conflicts = new HashMap<>();
 
-    public ConflictCollector() {
+    ConflictCollector() {
         for(ConflictType type : ConflictType.values()) {
             conflicts.put(type, new LinkedList<>());
         }
     }
 
+    private List<String> others = new LinkedList<>();
+
     public void add(ConflictType type, String message) {
         conflicts.get(type).add(message);
+        trackOthers(message);
+    }
+
+    private void trackOthers(String message) {
+        for(String spname : Utils.extractSubprojectNamesFromMessage(message))
+            if(!others.contains(spname))
+                others.add(spname);
     }
 
     public List<String> getMessagesForType(ConflictType type) {
