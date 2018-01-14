@@ -7,6 +7,7 @@ import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,6 +33,12 @@ public class ConsistencyChecker {
         }
         List<String> others = out.getOthers();
         System.out.println("Conflicts with the following "+others.size()+" other subprojects: " + others + "\n");
+        if(Files.exists(Paths.get("SFBTPDaten.json"))) {
+            List<String> persons = JsonData.mapSubprojectNamesToContactPersons("SFBTPDaten.json", others);
+            List<String> contactPersonMails = JsonData.mapSubprojectNamesToContactPersonMails("SFBTPDaten.json", others);
+            System.out.println("Corresponding contact persons: " + persons + "\n");
+            System.out.println("Their mails: " + contactPersonMails + "\n");
+        }
         System.out.println(out.stats());
         System.out.println("Wrote conflicts into " + fn);
     }

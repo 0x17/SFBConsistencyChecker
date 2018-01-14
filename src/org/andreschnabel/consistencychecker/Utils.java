@@ -1,8 +1,10 @@
 package org.andreschnabel.consistencychecker;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -10,6 +12,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Utils {
+
+    public static String readFile(String path, Charset encoding) throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        return new String(encoded, encoding);
+    }
 
     public static String extractSubprojectNameFromTaskName(String taskName, String prefix) throws Exception {
         Pattern pattern = Pattern.compile("(" + prefix + ")?([a-zA-Z]\\d?)\\s*(\\(i+\\))?");
