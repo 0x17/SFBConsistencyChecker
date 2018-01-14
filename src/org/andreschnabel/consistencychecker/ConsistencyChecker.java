@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ConsistencyChecker {
 
@@ -56,13 +57,16 @@ public class ConsistencyChecker {
     }
 
     private static void checkForCorrespondence(ConflictCollector out, SubProject receiverSubProject, List<SupplyRelationship> senderDeliversToReceiverRels, List<SupplyRelationship> recipientReceivesFromSenderRels, boolean checkForTextAndDateMismatch) {
+        final String unmatchedAtReceiverPrefixStr = "\n\nUnmatched candidates at " + receiverSubProject.name + ":\n";
+
         for(SupplyRelationship ssr : senderDeliversToReceiverRels) {
-            boolean identicalExists = recipientReceivesFromSenderRels.stream().anyMatch(rsr -> rsr.date.equals(ssr.date) && Utils.closeEnough(rsr.text, ssr.text));
-            if(!identicalExists) {
-                List<SupplyRelationship> correspondingCandidates = recipientReceivesFromSenderRels.stream().filter(rsr -> rsr.date.equals(ssr.date) || Utils.closeEnough(rsr.text, ssr.text)).collect(Collectors.toList());
+            if(recipientReceivesFromSenderRels.stream().noneMatch(rsr -> rsr.equals(ssr))) {
+                List<SupplyRelationship> correspondingCandidates = recipientReceivesFromSenderRels.stream().filter(rsr -> rsr.canBeAssociatedWith(ssr)).collect(Collectors.toList());
 
                 if(correspondingCandidates.isEmpty()) {
-                    out.add(ConflictCollector.ConflictType.CORRESPONDENCE_MISMATCH, "Missing at " + receiverSubProject.name + ": " + ssr);
+                    String unmatchedAtReceiverRelsStr = collectUnmatchedRelationsshipsAtReceiver(recipientReceivesFromSenderRels, senderDeliversToReceiverRels).map(SupplyRelationship::toString).collect(Collectors.joining("\n"));
+                    String unmatchedAtReceiverDisplayStr = unmatchedAtReceiverRelsStr.isEmpty() ? "" : unmatchedAtReceiverPrefixStr + unmatchedAtReceiverRelsStr + "\n";
+                    out.add(ConflictCollector.ConflictType.CORRESPONDENCE_MISMATCH, "Missing at " + receiverSubProject.name + ": " + ssr + unmatchedAtReceiverDisplayStr);
                 }
 
                 if(checkForTextAndDateMismatch) {
@@ -79,5 +83,9 @@ public class ConsistencyChecker {
                 }
             }
         }
+    }
+
+    private static Stream<SupplyRelationship> collectUnmatchedRelationsshipsAtReceiver(List<SupplyRelationship> recipientReceivesFromSenderRels, List<SupplyRelationship> senderDeliversToReceiverRels) {
+        return recipientReceivesFromSenderRels.stream().filter(rsr -> senderDeliversToReceiverRels.stream().anyMatch(rsr::canBeAssociatedWith));
     }
 }
