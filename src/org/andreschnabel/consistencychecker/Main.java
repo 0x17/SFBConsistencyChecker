@@ -1,16 +1,21 @@
 package org.andreschnabel.consistencychecker;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
         if(showUsage(args)) return;
 
+        Path mppFilePath = Paths.get(".");
+
         if(args[0].equals("stats")) {
-            ConflictStats.statLinesForAllSubprojects().forEach(System.out::println);
+            ConflictStats.statLinesForAllSubprojects(mppFilePath).forEach(System.out::println);
             return;
         }
 
-        ConflictCollector coll = ConsistencyChecker.checkConsistencyForTargetSubProject(args[0]);
+        ConflictCollector coll = ConsistencyChecker.checkConsistencyForTargetSubProject(args[0], mppFilePath);
         ConsistencyChecker.serializeConflicts(coll, args[0] + "_Conflicts.txt");
     }
 

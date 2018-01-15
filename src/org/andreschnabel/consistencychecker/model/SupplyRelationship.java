@@ -40,7 +40,7 @@ public class SupplyRelationship {
 
     @Override
     public String toString() {
-        return "SupplyRelationship{" +
+        return "LB{" +
                 "from='" + from + '\'' +
                 ", to='" + to + '\'' +
                 ", text='" + text.replace("\n", "") + '\'' +

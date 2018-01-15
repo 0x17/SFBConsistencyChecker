@@ -5,42 +5,68 @@ import org.andreschnabel.consistencychecker.model.SupplyRelationship;
 
 import java.io.BufferedWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ConsistencyChecker {
 
-    public static ConflictCollector checkConsistencyForTargetSubProject(String targetSubprojectName) throws Exception {
-        ConflictCollector out = new ConflictCollector();
+    public static ConflictCollector checkConsistencyForTargetSubProject(String targetSubprojectName, Path mppFilePath) {
+        return checkConsistencyForTargetSubProject(targetSubprojectName, mppFilePath, null);
+    }
 
-        SubProject targetSubProject = ModelReader.parseSubprojectFromDisk(targetSubprojectName);
-        List<String> knownProjectNames = Utils.collectSubProjectNames(Paths.get("."));
-        List<SubProject> adjacentSubProjects = targetSubProject.getAdjacentSubprojects().stream().filter(knownProjectNames::contains).map(ModelReader::parseSubprojectFromDisk).collect(Collectors.toList());
+    public static ConflictCollector checkConsistencyForTargetSubProject(String targetSubprojectName, Path mppFilePath, Consumer<Integer> progressCallback) {
+        ConflictCollector out = new ConflictCollector(targetSubprojectName);
+        try {
+            SubProject targetSubProject = ModelReader.parseSubprojectFromDisk(targetSubprojectName, mppFilePath);
+            List<String> knownProjectNames = Utils.collectSubProjectNames(mppFilePath);
+            List<SubProject> adjacentSubProjects = targetSubProject.getAdjacentSubprojects().stream().filter(knownProjectNames::contains).map((String subprojectName) -> ModelReader.parseSubprojectFromDisk(subprojectName, mppFilePath)).collect(Collectors.toList());
 
-        for(SubProject adjacentSubProject : adjacentSubProjects) {
-            checkRelations(out, targetSubProject, adjacentSubProject);
+            if(progressCallback != null) progressCallback.accept(0);
+
+            int ctr = 0;
+            for (SubProject adjacentSubProject : adjacentSubProjects) {
+                checkRelations(out, targetSubProject, adjacentSubProject);
+                if(progressCallback != null) progressCallback.accept((int)((float)(ctr+1)/(float)adjacentSubProjects.size()*100.0f));
+                ctr++;
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
-
         return out;
     }
 
-    public static void serializeConflicts(ConflictCollector out, String fn) throws Exception {
-        try(BufferedWriter writer = Files.newBufferedWriter(Paths.get(fn))) {
-            writer.write(out.toString());
+    public static String additionalInformationStrFromCollector(ConflictCollector out) {
+        StringBuilder ostr = new StringBuilder();
+        try {
+            List<String> others = out.getOthers();
+            ostr.append("Conflicts with the following " + others.size() + " other subprojects: " + others + "\n\n");
+            if (Files.exists(Paths.get("SFBTPDaten.json"))) {
+                List<String> persons = JsonData.mapSubprojectNamesToContactPersons("SFBTPDaten.json", others);
+                List<String> contactPersonMails = JsonData.mapSubprojectNamesToContactPersonMails("SFBTPDaten.json", others);
+                ostr.append("Corresponding contact persons: " + persons + "\n");
+                ostr.append("Their mails: " + contactPersonMails + "\n");
+            }
+            ostr.append(out.stats());
+        } catch(Exception e) {
+            e.printStackTrace();
         }
-        List<String> others = out.getOthers();
-        System.out.println("Conflicts with the following "+others.size()+" other subprojects: " + others + "\n");
-        if(Files.exists(Paths.get("SFBTPDaten.json"))) {
-            List<String> persons = JsonData.mapSubprojectNamesToContactPersons("SFBTPDaten.json", others);
-            List<String> contactPersonMails = JsonData.mapSubprojectNamesToContactPersonMails("SFBTPDaten.json", others);
-            System.out.println("Corresponding contact persons: " + persons + "\n");
-            System.out.println("Their mails: " + contactPersonMails + "\n");
+        return ostr.toString();
+    }
+
+    public static void serializeConflicts(ConflictCollector out, String fn) {
+        try {
+            try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fn))) {
+                writer.write(out.toString());
+            }
+            System.out.println(additionalInformationStrFromCollector(out));
+            System.out.println("Wrote conflicts into " + fn);
+        } catch(Exception e) {
+            e.printStackTrace();
         }
-        System.out.println(out.stats());
-        System.out.println("Wrote conflicts into " + fn);
     }
 
     private static void checkRelations(ConflictCollector out, SubProject targetSubProject, SubProject adjacentSubProject) {

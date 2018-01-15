@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,8 +41,12 @@ public class Utils {
         return matcher.group(1);
     }
 
-    public static List<String> collectSubProjectNames(Path root) throws IOException {
-        return Files.list(root).filter(p -> Files.isRegularFile(p) && p.getFileName().toString().startsWith("Zeitplan_") && p.getFileName().toString().endsWith(".mpp")).map(p -> Utils.extractSubprojectNameFromFilename(p.getFileName().toString())).collect(Collectors.toList());
+    public static List<String> collectSubProjectNames(Path root) {
+        try {
+            return Files.list(root).filter(p -> Files.isRegularFile(p) && p.getFileName().toString().startsWith("Zeitplan_") && p.getFileName().toString().endsWith(".mpp")).map(p -> Utils.extractSubprojectNameFromFilename(p.getFileName().toString())).collect(Collectors.toList());
+        } catch(Exception e) {
+            return new LinkedList<>();
+        }
     }
 
     public static boolean closeEnough(String a, String b) {
@@ -55,6 +60,11 @@ public class Utils {
         while(matcher.find()) {
             spnames.add(matcher.group(1));
         }
+
+        String[] withS = {"from='S'", "to='S'"};
+        if(Arrays.stream(withS).anyMatch(message::contains))
+            spnames.add("S");
+
         return spnames;
     }
 }

@@ -7,6 +7,8 @@ import java.util.Map;
 
 public class ConflictCollector {
 
+    private final String targetSubprojectName;
+
     @Override
     public String toString() {
         StringBuilder ostr = new StringBuilder();
@@ -54,7 +56,8 @@ public class ConflictCollector {
 
     private Map<ConflictType, List<String>> conflicts = new HashMap<>();
 
-    ConflictCollector() {
+    ConflictCollector(String targetSubprojectName) {
+        this.targetSubprojectName = targetSubprojectName;
         for(ConflictType type : ConflictType.values()) {
             conflicts.put(type, new LinkedList<>());
         }
@@ -69,7 +72,7 @@ public class ConflictCollector {
 
     private void trackOthers(String message) {
         for(String spname : Utils.extractSubprojectNamesFromMessage(message))
-            if(!others.contains(spname))
+            if(!others.contains(spname) && !spname.equals(targetSubprojectName))
                 others.add(spname);
     }
 
