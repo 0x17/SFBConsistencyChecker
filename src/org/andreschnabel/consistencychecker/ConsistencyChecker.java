@@ -3,7 +3,6 @@ package org.andreschnabel.consistencychecker;
 import org.andreschnabel.consistencychecker.model.SubProject;
 import org.andreschnabel.consistencychecker.model.SupplyRelationship;
 
-import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,9 +58,7 @@ public class ConsistencyChecker {
 
     public static void serializeConflicts(ConflictCollector out, String fn) {
         try {
-            try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fn))) {
-                writer.write(out.toString());
-            }
+            Utils.writeStringToFile(out.toString(), fn);
             System.out.println(additionalInformationStrFromCollector(out));
             System.out.println("Wrote conflicts into " + fn);
         } catch(Exception e) {

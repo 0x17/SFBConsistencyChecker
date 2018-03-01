@@ -31,7 +31,6 @@ public class MiniDate {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(month, year);
     }
 
@@ -41,5 +40,9 @@ public class MiniDate {
                 "month=" + month +
                 ", year=" + year +
                 '}';
+    }
+
+    public String toMMYYYY() {
+        return (month <= 9 ? "0" : "") + month + "." + year;
     }
 }

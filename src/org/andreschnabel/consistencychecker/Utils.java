@@ -1,5 +1,6 @@
 package org.andreschnabel.consistencychecker;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -17,6 +18,12 @@ public class Utils {
     public static String readFile(String path, Charset encoding) throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         return new String(encoded, encoding);
+    }
+
+    public static void writeStringToFile(String s, String fn) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fn))) {
+            writer.write(s);
+        }
     }
 
     public static String extractSubprojectNameFromTaskName(String taskName, String prefix) throws Exception {
